@@ -1,0 +1,23 @@
+<form method="GET" action="/filtered" class="row g-3 mb-4">
+    <div class="col-md-3">
+        <input type="text" class="form-control" name="city" placeholder="Filtrar por cidade" value="<%= filters.city || '' %>">
+    </div>
+    <div class="col-md-3">
+        <input type="text" class="form-control" name="state" placeholder="Filtrar por estado" value="<%= filters.state || '' %>">
+    </div>
+    <div class="col-md-3">
+        <select class="form-select" name="platform">
+            <option value="" <%= !filters.platform === '' ? 'selected' : '' %>>Filtrar por plataforma</option>
+            <option value="aiqfome" <%= !filters.platform === 'aiqfome' ? 'selected' : '' %>>Aiqfome</option>
+            <option value="ifood" <%= !filters.platform === 'ifood' ? 'selected' : '' %>>iFood</option>
+        </select>
+    </div>
+    <div class="col-md-3">
+        <input type="date" class="form-control" name="date" placeholder="Filtrar por data do scrap" value="<%= filters.date || '' %>">
+    </div>
+    <div class="col-12">
+        <button type="submit" class="btn btn-primary">Aplicar Filtros</button>
+        <a href="/" class="btn btn-secondary">Limpar Filtros</a>
+        <a href="/scrap" class="btn btn-success">Iniciar um novo scrap</a>
+    </div>
+</form>

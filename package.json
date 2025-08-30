@@ -1,0 +1,24 @@
+{
+  "name": "monitor-system",
+  "version": "1.0.0",
+  "description": "A system that monitors competitors through web scraping using MySQL and socket.io to update searches.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Edmylson",
+  "license": "ISC",
+  "dependencies": {
+    "body-parser": "^2.2.0",
+    "cheerio": "^1.1.2",
+    "dayjs": "^1.11.17",
+    "ejs": "^3.1.10",
+    "express": "^5.1.0",
+    "knex": "^3.1.0",
+    "lodash": "^4.17.21",
+    "multer": "^2.0.2",
+    "mysql2": "^3.14.3",
+    "puppeteer": "^24.17.1",
+    "socket.io": "^4.8.1"
+  }
+}
