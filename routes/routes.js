@@ -7,5 +7,6 @@ router.get('/', HomeController.index);
 router.get('/page', HomeController.filteredIndex);
 router.get('/filtered', HomeController.filteredIndex);
 router.get('/scrap', ScrapController.scrap);
+router.get('/export', ScrapController.exportToCSV);
 
 module.exports = router;

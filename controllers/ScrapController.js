@@ -17,6 +17,20 @@ class ScrapController {
         }
         res.status(201).json(newScrap);
     }
+
+    async exportToCSV(req, res) {
+        const { city, state, platform, date } = req.query;
+        const filters = { city, state, platform, date };
+        const csvData = await ScrapRepository.exportToCSV(filters);
+        
+        if (csvData.error) {
+            return res.status(500).json({ error: csvData.error });
+        }
+        
+        res.header('Content-Type', 'text/csv');
+        res.attachment('scraps.csv');
+        return res.send(csvData);
+    }
 }
 
 module.exports = new ScrapController();

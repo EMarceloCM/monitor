@@ -19,5 +19,6 @@
         <button type="submit" class="btn btn-primary">Aplicar Filtros</button>
         <a href="/" class="btn btn-secondary">Limpar Filtros</a>
         <a href="/scrap" class="btn btn-success">Iniciar um novo scrap</a>
+        <a href="/export?city=<%= filters.city || '' %>&state=<%= filters.state || '' %>&platform=<%= filters.platform || '' %>&date=<%= filters.date || '' %>" class="btn btn-warning float-end">Exportar CSV</a>
     </div>
 </form>

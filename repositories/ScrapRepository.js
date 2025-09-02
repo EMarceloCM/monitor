@@ -87,6 +87,24 @@ class ScrapRepository {
             return { error: `Error fetching scraps with filters: ${error}` };
         }
     }
+
+    async exportToCSV(filters) {
+        try {
+            const { scraps } = await this.findByFilters(filters, 1, Number.MAX_SAFE_INTEGER);
+            if (scraps.error) {
+                return { error: scraps.error };
+            }
+            const headers = ['id', 'establishment', 'city', 'state', 'platform', 'link', 'reviews', 'last_review', 'createdAt'];
+            const csvRows = [
+                headers.join(','),
+                ...scraps.map(scrap => headers.map(header => `"${(scrap[header] || '').toString().replace(/"/g, '""')}"`).join(','))
+            ];
+            return csvRows.join('\n');
+        } catch (error) {
+            console.error('Error exporting scraps to CSV: ', error);
+            return { error: `Error exporting scraps to CSV: ${error}` };
+        }
+    }
 }
 
 module.exports = new ScrapRepository();
