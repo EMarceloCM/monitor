@@ -16,9 +16,11 @@
         <input type="date" class="form-control" name="date" placeholder="Filtrar por data do scrap" value="<%= filters.date || '' %>">
     </div>
     <div class="col-12">
-        <button type="submit" class="btn btn-primary">Aplicar Filtros</button>
+        <button type="submit" class="btn btn-success">Aplicar Filtros</button>
         <a href="/" class="btn btn-secondary">Limpar Filtros</a>
-        <a href="/scrap" class="btn btn-success">Iniciar um novo scrap</a>
-        <a href="/export?city=<%= filters.city || '' %>&state=<%= filters.state || '' %>&platform=<%= filters.platform || '' %>&date=<%= filters.date || '' %>" class="btn btn-warning float-end">Exportar CSV</a>
+        <a href="/stats" class="btn btn-primary">Estatísticas</a>
+        <a href="/scrap" class="btn btn-primary">Novo scrape</a>
+        <a href="/export/csv?city=<%= filters.city || '' %>&state=<%= filters.state || '' %>&platform=<%= filters.platform || '' %>&date=<%= filters.date || '' %>" class="btn btn-warning float-end me-2">Exportar CSV</a>
+        <a href="/export/excel?city=<%= filters.city || '' %>&state=<%= filters.state || '' %>&platform=<%= filters.platform || '' %>&date=<%= filters.date || '' %>" class="btn btn-warning float-end me-2">Exportar Excel</a>
     </div>
 </form>

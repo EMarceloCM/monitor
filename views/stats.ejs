@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Monitoramento</title>
+    <link rel="stylesheet" href="/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        .kpi-card { min-width: 160px }
+        .chart-card { min-height: 360px }
+        .small-muted { font-size: .85rem; color: #6c757d; }
+        .table-fixed { max-height: 360px; overflow:auto; display:block; }
+    </style>
+</head>
+<body>
+    <%- include('partials/navbar') -%>
+
+    <div class="container mt-4">
+        <div class="d-flex align-items-center justify-content-between mb-3">
+            <h1 class="h3 mb-0">Estatísticas dos Scrapes</h1>
+            <div class="small-muted">Última atualização: <strong><%= lastUpdated || '' %></strong></div>
+        </div>
+
+        <div class="row g-3 mb-4">
+            <div class="col-auto">
+                <div class="card kpi-card shadow-sm">
+                    <div class="card-body">
+                        <div class="text-muted small">Estabelecimentos</div>
+                        <div class="h4 mb-0"><%= kpis ? kpis.totalEstablishments : 0 %></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-auto">
+                <div class="card kpi-card shadow-sm">
+                    <div class="card-body">
+                        <div class="text-muted small">Total de avaliações</div>
+                        <div class="h4 mb-0"><%= kpis ? kpis.totalReviews : 0 %></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-auto">
+                <div class="card kpi-card shadow-sm">
+                    <div class="card-body">
+                        <div class="text-muted small">Média de avaliações</div>
+                        <div class="h4 mb-0"><%= kpis ? kpis.avgReviewsPerEstablishment : 0 %></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-auto">
+                <div class="card kpi-card shadow-sm">
+                    <div class="card-body">
+                        <div class="text-muted small">Mediana (dias desde última)</div>
+                        <div class="h4 mb-0"><%= kpis ? kpis.medianDaysSinceLastReview : 0 %></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-auto">
+                <div class="card kpi-card shadow-sm">
+                    <div class="card-body">
+                        <div class="text-muted small">% ativos (30d)</div>
+                        <div class="h4 mb-0"><%= kpis ? (kpis.pctActive30d * 100).toFixed(1) + '%' : '0%' %></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-3 mb-4">
+            <div class="col-lg-6">
+                <div class="card chart-card shadow-sm">
+                    <div class="card-body d-flex flex-column">
+                        <h5 class="card-title">Estabelecimentos por plataforma</h5>
+                        <canvas id="establishmentsChart" style="flex:1; height:300px;"></canvas>
+                        <div class="small-muted mt-2">Número de estabelecimentos por plataforma</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-6">
+                <div class="card chart-card shadow-sm">
+                    <div class="card-body d-flex flex-column">
+                        <h5 class="card-title">Avaliações por plataforma</h5>
+                        <canvas id="reviewsChart" style="flex:1; height:300px;"></canvas>
+                        <div class="small-muted mt-2">Número de avaliações por plataforma</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-3 mb-4">
+            <div class="col-lg-6">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h5 class="card-title">Top 10 por número de avaliações</h5>
+                        <div class="table-responsive table-fixed">
+                            <table class="table table-sm table-hover mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>#</th>
+                                        <th>Estabelecimento</th>
+                                        <th>Plataforma</th>
+                                        <th>Cidade/UF</th>
+                                        <th class="text-end">Avaliações</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <% if (topByReviews && topByReviews.length){ %>
+                                        <% topByReviews.forEach(function(r,i){ %>
+                                            <tr>
+                                                <td><%= i+1 %></td>
+                                                <td><a href="<%= r.link %>" target="_blank" rel="noopener"><%= r.name %></a></td>
+                                                <td><%= r.platform %></td>
+                                                <td><%= r.city %> / <%= r.state %></td>
+                                                <td class="text-end"><%= r.reviews %></td>
+                                            </tr>
+                                        <% }) %>
+                                    <% } else { %>
+                                        <tr><td colspan="5" class="text-center small-muted">Sem dados</td></tr>
+                                    <% } %>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-6">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h5 class="card-title">Top 10 por crescimento percentual</h5>
+                        <div class="table-responsive table-fixed">
+                            <table class="table table-sm table-hover mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>#</th>
+                                        <th>Estabelecimento</th>
+                                        <th>Plataforma</th>
+                                        <th>Cidade/UF</th>
+                                        <th class="text-end">Crescimento %</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <% if (topByGrowth && topByGrowth.length){ %>
+                                        <% topByGrowth.forEach(function(r,i){ %>
+                                            <tr>
+                                                <td><%= i+1 %></td>
+                                                <td><a href="<%= r.link %>" target="_blank" rel="noopener"><%= r.name %></a></td>
+                                                <td><%= r.platform %></td>
+                                                <td><%= r.city %> / <%= r.state %></td>
+                                                <td class="text-end"><%= (r.growthPct*100).toFixed(1) %>%</td>
+                                            </tr>
+                                        <% }) %>
+                                    <% } else { %>
+                                        <tr><td colspan="4" class="text-center small-muted">Sem dados</td></tr>
+                                    <% } %>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-3 mb-5">
+            <div class="col-12">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h5 class="card-title">Top cidades por média de avaliações por estabelecimento</h5>
+                        <div class="table-responsive">
+                            <table class="table table-sm table-hover mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>#</th>
+                                        <th>Cidade</th>
+                                        <th>Estado</th>
+                                        <th class="text-end">Média avaliações</th>
+                                        <th class="text-end">Nº estab.</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <% if (topCities && topCities.length){ %>
+                                        <% topCities.forEach(function(c,i){ %>
+                                            <tr>
+                                                <td><%= i+1 %></td>
+                                                <td><%= c.city %></td>
+                                                <td><%= c.state %></td>
+                                                <td class="text-end"><%= c.avgReviews.toFixed(1) %></td>
+                                                <td class="text-end"><%= c.count %></td>
+                                            </tr>
+                                        <% }) %>
+                                    <% } else { %>
+                                        <tr><td colspan="5" class="text-center small-muted">Sem dados</td></tr>
+                                    <% } %>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-chart-boxplot"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        const platformStats = (<%- JSON.stringify(platformStats || []) %>).filter(p => p.reviews > 0);
+        const labelsPl = platformStats.map(p => p.platform);
+        const estData = platformStats.map(p => p.establishments);
+        const revData = platformStats.map(p => p.reviews);
+
+        const ctxEst = document.getElementById('establishmentsChart').getContext('2d');
+        new Chart(ctxEst, {
+            type: 'bar',
+            data: {
+                labels: labelsPl,
+                datasets: [
+                    { label: 'Estabelecimentos', data: estData, backgroundColor: '#1f77b4' }
+                ]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { display: false } },
+                scales: { y: { beginAtZero: true } }
+            }
+        });
+
+        const ctxRev = document.getElementById('reviewsChart').getContext('2d');
+        new Chart(ctxRev, {
+            type: 'bar',
+            data: {
+                labels: labelsPl,
+                datasets: [
+                    { label: 'Avaliações', data: revData, backgroundColor: '#ff7f0e' }
+                ]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { display: false } },
+                scales: { y: { beginAtZero: true } }
+            }
+        });
+    </script>
+</body>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js" integrity="sha384-I7E8VVD/ismYTF4hNIPjVp/Zjvgyol6VFvRkX/vR+Vc4jQkC+hVqc2pM8ODewa9r" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.min.js" integrity="sha384-7qAoOXltbVP82dhxHAUje59V5r2YsVfBafyUDxEdApLPmcdhBPg1DKg1ERo0BZlK" crossorigin="anonymous"></script>
+<script src="/js/bootstrap.min.js"></script>
+</html>
