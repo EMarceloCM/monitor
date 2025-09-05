@@ -8,8 +8,18 @@ class ScrapController {
     async create(req, res) {
         const { establishment, city, state, platform, link, reviews, last_review } = req.body;
 
-        if (!establishment || !city || !state || !platform || !link || !reviews)
+        if (!establishment)
             return res.status(400).json({ error: "Name, city, state, platform, link and reviews are required" });
+        if (!city)
+            return res.status(400).json({ error: "City is required" });
+        if (!state)
+            return res.status(400).json({ error: "State is required" });
+        if (!platform)
+            return res.status(400).json({ error: "Platform is required" });
+        if (!link)
+            return res.status(400).json({ error: "Link is required" });
+        if (!reviews || isNaN(reviews) || reviews < 0)
+            return res.status(400).json({ error: "Reviews is required must be a non-negative number" });
 
         const newScrap = await ScrapRepository.create(establishment, city, state, platform, link, reviews, last_review);
         if (newScrap.error) {

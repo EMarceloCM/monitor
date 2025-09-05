@@ -14,16 +14,17 @@
         <form id="scrapForm">
             <div class="mb-3" id="cityDiv">
                 <label for="city" class="form-label">Cidade</label>
-                <input type="text" class="form-control w-50" id="city" name="city" required>
+                <input type="text" class="form-control w-50" id="city" name="city" placeholder="Ex: sao-joao-del-rei" required>
             </div>
             <div class="mb-3" id="stateDiv">
                 <label for="state" class="form-label">Estado</label>
-                <input type="text" class="form-control w-50" id="state" name="state" required>
+                <input type="text" class="form-control w-50" id="state" name="state" placeholder="Ex: MG" required>
             </div>
             <div class="mb-3">
                 <label for="platform" class="form-label">Plataforma</label>
                 <select class="form-select w-50" id="platform" name="platform" required>
                     <option value="aiqfome">Aiqfome</option>
+                    <option value="uairango">UaiRango</option>
                     <option value="ifood">iFood</option>
                 </select>
             </div>
@@ -108,6 +109,16 @@
                 options = {
                     method: "POST",
                     body: formData
+                };
+            } else if (platform.value === "uairango") {
+                const city = document.getElementById("city").value;
+                const state = document.getElementById("state").value;
+
+                url = "http://localhost:3000/scrapeuairango";
+                options = {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ city, state })
                 };
             }
 

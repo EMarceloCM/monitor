@@ -68,7 +68,7 @@ app.post('/scrapeifood', upload.single('file'), async (req, res) => {
         let page;
         try {
             page = await browser.newPage();
-            // networkidle2 aguarda a página carregar por completo
+
             await page.goto(link, { waitUntil: "networkidle2" });
             await page.waitForSelector(".merchant-info__title");
 
@@ -148,6 +148,137 @@ app.post('/scrapeifood', upload.single('file'), async (req, res) => {
 
     await browser.close();
     percentage = 100;
+    res.json({ success: true, data: scrapedData });
+});
+
+app.post("/scrapeuairango", async (req, res) => {
+    const { city, state } = req.body;
+    if (!city || !state) return res.status(400).json({ error: "Both city and state are required" });
+
+    const browser = await puppeteer.launch();
+    const page = await browser.newPage();
+    const listUrl = `https://www.uairango.com/delivery/${city}`;
+    await page.goto(listUrl, { waitUntil: "networkidle0" });
+
+    const stateSlug = state.toLowerCase();
+
+    // Captura links usando MutationObserver
+    const links = await page.evaluate(async (stateSlug) => {
+        const linksSet = new Set();
+        
+        // Observador de mutações para capturar links assim que aparecem
+        const observer = new MutationObserver((mutations) => {
+            mutations.forEach(m => {
+                m.addedNodes.forEach(node => {
+                    if (node.nodeType === 1) { // Elemento
+                        if (node.tagName === "A" && node.href.includes(stateSlug)) {
+                            linksSet.add(node.href);
+                        }
+                        node.querySelectorAll && node.querySelectorAll("a").forEach(a => {
+                            if (a.href.includes(stateSlug)) linksSet.add(a.href);
+                        });
+                    }
+                });
+            });
+        });
+
+        observer.observe(document.body, { childList: true, subtree: true });
+
+        let previousHeight = 0;
+        while (true) {
+            window.scrollBy(0, window.innerHeight);
+            await new Promise(r => setTimeout(r, 500)); // espera novos elementos carregarem
+            const scrollHeight = document.body.scrollHeight;
+            if (scrollHeight === previousHeight) break;
+            previousHeight = scrollHeight;
+        }
+
+        observer.disconnect();
+        return Array.from(linksSet);
+    }, stateSlug);
+
+    console.log("Links encontrados:", links);
+
+    const delay = ms => new Promise(r => setTimeout(r, ms));
+    let scrapedData = [];
+
+    const pagePromise = async link => {
+        const establishment = { name: null, link, reviews: 0, last_review: null };
+        const newPage = await browser.newPage();
+        await newPage.goto(link, { waitUntil: "networkidle2", timeout: 100000 });
+
+        try {
+            establishment.name = await newPage.$eval("h1", el => (el.textContent || "").trim());
+        } catch {
+            establishment.name = "Name not found";
+        }
+
+        try {
+            const [button] = await newPage.$$('xpath/.//button[@color="warning" and @variant="link"]');
+
+            if (button) {
+                await button.click();
+                await newPage.waitForSelector("article div div h1", { visible: true, timeout: 100000 });
+
+                const modalHeading = await newPage.$eval("article h1", el => el.textContent || "");
+                const m = modalHeading.match(/(\d{1,6})/);
+                if (m) establishment.reviews = parseInt(m[1], 10) || 0;
+            } else {
+                console.warn("Botão de avaliações não encontrado em", link);
+                establishment.reviews = 0;
+            }
+        } catch (e) {
+            console.warn("\nErro ao abrir modal em ", link, e.message);
+            establishment.reviews = 0;
+        }
+
+        await newPage.close();
+        return establishment;
+    };
+
+    for (let i = 0; i < links.length; i++) {
+        const url = links[i];
+        console.log("url:", url);
+        console.log("progress:", `${Math.round((i / links.length) * 100)}%`);
+        let currentPageData = {};
+        try {
+            currentPageData = await pagePromise(url);
+        } catch (e) {
+            console.warn("Erro processando:", url, e.message);
+            continue;
+        }
+        scrapedData.push(currentPageData);
+
+        console.log("Salvando:", {
+            establishment: currentPageData.name,
+            city,
+            state,
+            platform: "uairango",
+            link: currentPageData.link,
+            reviews: Number(currentPageData.reviews) || 0,
+            last_review: null
+        });
+
+        ScrapController.create({
+            body: {
+                establishment: currentPageData.name || "Name not found",
+                city,
+                state,
+                platform: "uairango",
+                link: currentPageData.link,
+                reviews: Number(currentPageData.reviews) || 0,
+                last_review: null
+            }
+        }, {
+            status: code => ({
+                json: data => console.log(`Response status: ${code}`, data)
+            })
+        });
+
+        await delay(500);
+    }
+
+    await browser.close();
     res.json({ success: true, data: scrapedData });
 });
 
